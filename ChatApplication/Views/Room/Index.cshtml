@@ -1,0 +1,125 @@
+﻿@model string
+   <style>
+   #messageDiv{
+  height:400px;
+  width:79%; 
+  overflow-y: scroll;
+  float:left;
+  font: 14px/18px Arial;
+  background: #dfe2e2;
+  padding: 20px;
+  box-sizing: border-box;
+}
+#messageDiv span{
+  position: relative;
+  color: #666;
+  margin-top: 40px;
+  padding: 10px;
+  display: block;
+  background: #ccc;
+  border-radius: 5px;  
+}
+#messageDiv span:before{
+  content: '';
+  display: block;
+  position: absolute;
+  top: -10px;
+  left: 15px;
+  width: 0;
+  height: 0;
+  border: 5px solid #fff;
+  border-color:  transparent transparent #ccc transparent;
+}
+#messageDiv span b{
+  position: absolute;
+  top: -25px;
+  color: #286c6d;
+  display: block;
+  padding-bottom: 5px;
+}
+.usersDiv {
+  font: 14px/18px Arial;
+  height:400px;
+  width:21% ; 
+  background-color:#0c2b2b;
+  float:right;
+  overflow-y scroll;  
+  box-sizing: border-box;
+  position: relative;
+}
+.usersDiv ul {  
+  margin: 0;
+  padding: 10px 0 0 0;
+}
+.usersDiv ul li {
+  list-style: none;
+  color: #8db5b5;
+  padding: 10px 15px;  
+  border-bottom: 1px solid #133838;
+}
+.usersDiv ul li a, .usersDiv ul li a:active{
+  color:  color: #8db5b5;
+}
+.usersDiv button{
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: transparent;
+  border: 1px solid #ccc;
+  color:#ccc;
+  padding: 5px 10px;
+  transition-duration: 400ms;
+}
+.usersDiv button:hover{
+  background: rgba(255,255,255,0.2)
+}
+   </style>
+<div style="overflow:hidden">
+    <div id="messageDiv" style="height:400px;width:79%; overflow-y: scroll;float:left"></div>
+    <div class="usersDiv" style="height:400px;width:21% ; float:right" overflow-y scroll;>
+        <ul id="usersList" ></ul>
+    </div>
+    
+</div>
+
+<input  type="button" id="send" value="send"/>
+<input type="text" id="message"/>
+<script type="text/javascript">
+
+        $(function () {
+            $.connection.hub.qs = "roomId="+'@Model';
+            var chat = $.connection.ChatHub;
+            chat.client.notifyMessage = function (userName,message) {
+                $("#messageDiv").append($('<span>').
+                    append("<b>"+userName+":</b>"+message).append("<br/>"));
+                $("#messageDiv").scrollTop($("#messageDiv")[0].scrollHeight);
+            };
+
+            chat.client.notifyNewEntry = function (users) {
+                $("#usersList").empty();
+                for (var i in users) {
+                    $('#usersList').append(
+                     $('<li>').append(
+
+                         $('<span>').append(users[i])
+                    ));
+                }
+            }
+
+            $.connection.hub.start().done(function () {
+                $("#send").click(function () {
+                    if ($("#message").val() != "") {
+                        chat.server.send($("#message").val());
+                        $("#message").val("");
+                    }
+
+                });
+
+                setInterval(function () {
+                    chat.server.send("echo");
+                    $.post("/Room/UpdateRoomAccessDate/"+"@Model");
+                }, 100);
+
+            });
+        });
+</script>
